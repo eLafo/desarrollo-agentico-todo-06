@@ -31,3 +31,7 @@ Una sección por pregunta.
 Entre una y tres condiciones por fichero, y las entradas en orden por número de issue.
 
 ## Índice
+
+- [feature-1-quiero-poder-ordenar-las-listas-de-tareas.md](feature-1-quiero-poder-ordenar-las-listas-de-tareas.md): para reordenar sin ratón, además de arrastrar hay botones «Subir» y «Bajar» (opción B)
+  - Cuando se plantee quitar, cambiar o ampliar la forma de reordenar las tareas (botones, teclado, asa de arrastre)
+  - Cuando se decida cómo dar un equivalente con teclado y sin JavaScript a una interacción solo de ratón

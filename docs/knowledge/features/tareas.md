@@ -6,13 +6,14 @@ Lo que ve y puede hacer el usuario con sus tareas. Todo pasa en dos pantallas: l
 
 - La pestaña y el enlace de la navegación lateral dicen «Tareas». El título de la página también.
 - Debajo del título, el número de tareas: «3 tareas en tu lista», y en singular «1 tarea en tu lista».
-- Las tareas salen por orden de creación, de la más antigua a la más reciente.
+- Las tareas salen en el orden que elige el usuario (ver [Ordenar](#ordenar)). Una tarea nueva sale al final, y completarla, reabrirla o editarla no la mueve.
 - Cada tarea muestra:
+  - con JavaScript y en pantallas de más de 760 px, un asa a la izquierda para arrastrarla;
   - un botón redondo para completarla o reabrirla;
   - su título;
   - la etiqueta «Completada», si lo está;
-  - un enlace para editarla y un botón para eliminarla.
-- Los botones solo tienen icono, y su nombre accesible incluye el título: «Completar tarea: Comprar pan», «Reabrir tarea: …», «Editar tarea: …», «Eliminar tarea: …».
+  - un botón para subirla y otro para bajarla, un enlace para editarla y un botón para eliminarla.
+- Los botones solo tienen icono, y su nombre accesible incluye el título: «Completar tarea: Comprar pan», «Reabrir tarea: …», «Subir tarea: …», «Bajar tarea: …», «Editar tarea: …», «Eliminar tarea: …».
 - Sin tareas, la lista muestra «No hay tareas todavía. Añade la primera con el formulario.», y el número dice «0 tareas en tu lista».
 
 ## Reglas del título
@@ -39,9 +40,18 @@ Antes de guardar, la acción quita los espacios del principio y del final. Los c
 - Con un título inválido, la pantalla se vuelve a mostrar con `422` y el mensaje. «Cancelar» vuelve a la lista sin cambiar nada.
 - Si la tarea no existe, `404`.
 
+## Ordenar
+
+- Los botones de subir y bajar mueven la tarea un puesto en la lista. El de subir de la primera tarea y el de bajar de la última salen desactivados; con una sola tarea, los dos.
+- Funcionan con el teclado y sin JavaScript: el formulario envía `PUT /tasks/{task_id}/move` con `offset`, los puestos que se mueve la tarea (`-1` sube y `1` baja), y vuelve a la lista. No hay aviso.
+- Con JavaScript, en pantallas de más de 760 px, cada tarea tiene a su izquierda un asa de seis puntos para arrastrarla. Con ratón, el asa se ve al pasar por la tarea o al enfocarla. En pantallas más estrechas no hay asa, y se ordena con los botones.
+- Mientras se arrastra, la tarea se ve semitransparente y la lista se recoloca bajo el puntero. Al soltarla en la lista, `app.js` envía su formulario de mover con los puestos que se ha desplazado y vuelve a pintar la lista con la que devuelve el servidor. Con Escape, o soltándola fuera de la lista, la tarea vuelve a su sitio y no se guarda nada. Si el servidor rechaza el movimiento, la página se recarga con el orden guardado.
+- El orden se guarda: se mantiene al recargar. Las tareas completadas se ordenan igual que las pendientes.
+- Un movimiento que sacaría la tarea de la lista, o un `offset` que no es un número, da `422` y no cambia nada. Si la tarea no existe, `404`.
+
 ## Completar y reabrir
 
-- El botón de cada tarea la alterna entre pendiente y completada. Una tarea completada lleva la etiqueta «Completada», y su botón pasa a reabrirla.
+- El botón de cada tarea la alterna entre pendiente y completada. Una tarea completada lleva la etiqueta «Completada», y su botón pasa a reabrirla. La tarea no cambia de sitio en la lista.
 - Sin JavaScript, el formulario envía `PUT /tasks/{task_id}/toggle`, la acción cambia el estado y vuelve a la lista. No hay aviso.
 - Con JavaScript, `app.js` cambia la tarea en la página sin recargarla (la etiqueta, el estado del botón y su nombre accesible) y después llama a `fetch(form.action)`.
 
@@ -61,3 +71,4 @@ Los avisos salen arriba, en la primera pantalla que se muestra después de la ac
 | Editar | «Tarea actualizada.» |
 | Eliminar | «Tarea eliminada.» |
 | Completar o reabrir | Ninguno |
+| Ordenar | Ninguno |
