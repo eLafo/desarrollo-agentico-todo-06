@@ -6,7 +6,7 @@ export { expect };
 type Task = { title: string; completed?: boolean };
 
 type Fixtures = {
-  // Deja la tabla con exactamente estas tareas, en este orden de creación.
+  // Deja la tabla con exactamente estas tareas, en este orden: el de la lista y el de creación.
   tasks: (tasks: Task[]) => Promise<void>;
 };
 
@@ -32,9 +32,9 @@ export const test = base.extend<Fixtures>({
       await db.query('DELETE FROM tasks');
       for (const [i, task] of tasks.entries()) {
         await db.query(
-          `INSERT INTO tasks (id, title, completed, created_at, updated_at)
-           VALUES (gen_random_uuid(), $1, $2, now() + $3 * interval '1 millisecond', now())`,
-          [task.title, task.completed ?? false, i],
+          `INSERT INTO tasks (id, title, completed, position, created_at, updated_at)
+           VALUES (gen_random_uuid(), $1, $2, $4, now() + $3 * interval '1 millisecond', now())`,
+          [task.title, task.completed ?? false, i, i + 1],
         );
       }
     });

@@ -18,3 +18,10 @@ Un documento de cierre cuenta qué pasó en su caso, y no se reescribe cuando ot
 Entre tres y cinco condiciones por documento, y las entradas en orden por número de issue. Si un documento ya tiene entrada, se actualizan sus condiciones en lugar de añadir otra.
 
 ## Índice
+
+- [feature-1-quiero-poder-ordenar-las-listas-de-tareas.md](feature-1-quiero-poder-ordenar-las-listas-de-tareas.md): la lista de tareas se reordena arrastrando o con botones «Subir» y «Bajar», y el orden se guarda en `tasks.position`
+  - Cuando se trabaje con `PUT /tasks/{task_id}/move`, `TasksMove` o `Task.Move` en `models/task.go`
+  - Cuando se modifique el orden de la lista, la columna `position` de `tasks` o cómo se crea una tarea nueva
+  - Cuando se toque `templates/tasks/index.plush.html`, el asa de arrastre o los botones de cada tarea en `public/assets/app.js` y `app.css`
+  - Cuando se escriban migraciones o fixtures de e2e que inserten tareas (`e2e/fixtures.ts`)
+  - Cuando se investigue que una tarea cambie de sitio al completarla, o que el orden no se conserve al recargar

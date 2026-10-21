@@ -2,6 +2,7 @@ package actions
 
 import (
 	"net/url"
+	"regexp"
 	"strings"
 
 	"todo/models"
@@ -236,4 +237,190 @@ func (as *ActionSuite) Test_TasksUpdate_NotFound() {
 func (as *ActionSuite) Test_TasksUpdate_InvalidID() {
 	res := as.HTML("/tasks/no-es-un-uuid").Put(url.Values{"title": {"Título nuevo"}})
 	as.Equal(404, res.Code)
+}
+
+func (as *ActionSuite) createTasks(titles ...string) models.Tasks {
+	tasks := models.Tasks{}
+	for _, title := range titles {
+		task := models.Task{Title: title}
+		verrs, err := as.DB.ValidateAndCreate(&task)
+		as.NoError(err)
+		as.False(verrs.HasAny())
+		tasks = append(tasks, task)
+	}
+	return tasks
+}
+
+func (as *ActionSuite) listedTitles() []string {
+	tasks, err := models.AllTasks(as.DB)
+	as.NoError(err)
+	titles := []string{}
+	for _, task := range tasks {
+		titles = append(titles, task.Title)
+	}
+	return titles
+}
+
+func (as *ActionSuite) shownInOrder(body string, titles ...string) {
+	last := -1
+	for _, title := range titles {
+		i := strings.Index(body, `<span class="task-title">`+title+`</span>`)
+		as.Greater(i, last, title)
+		last = i
+	}
+}
+
+func buttonDisabled(body, name string) bool {
+	return regexp.MustCompile(`aria-label="` + regexp.QuoteMeta(name) + `"[^>]*\sdisabled[\s>]`).MatchString(body)
+}
+
+func (as *ActionSuite) Test_TasksIndex_ListsTasksInOrder() {
+	tasks := as.createTasks("A", "B", "C")
+	as.NoError(tasks[2].Move(as.DB, -2))
+
+	res := as.HTML("/").Get()
+	as.Equal(200, res.Code)
+	as.shownInOrder(res.Body.String(), "C", "A", "B")
+}
+
+func (as *ActionSuite) Test_TasksIndex_MoveButtons() {
+	tasks := as.createTasks("Primera", "Segunda", "Tercera")
+
+	res := as.HTML("/").Get()
+	as.Equal(200, res.Code)
+
+	body := res.Body.String()
+	for _, task := range tasks {
+		as.Contains(body, `action="/tasks/`+task.ID.String()+`/move"`)
+	}
+	as.Contains(body, `name="offset" value="-1"`)
+	as.Contains(body, `name="offset" value="1"`)
+
+	disabled := map[string]bool{"Subir tarea: Primera": true, "Bajar tarea: Tercera": true}
+	for _, task := range tasks {
+		for _, name := range []string{"Subir tarea: " + task.Title, "Bajar tarea: " + task.Title} {
+			as.Contains(body, `aria-label="`+name+`"`)
+			as.Equal(disabled[name], buttonDisabled(body, name), name)
+		}
+	}
+}
+
+func (as *ActionSuite) Test_TasksMove_Up() {
+	tasks := as.createTasks("A", "B", "C")
+
+	res := as.HTML("/tasks/%s/move", tasks[1].ID).Put(url.Values{"offset": {"-1"}})
+	as.Equal(303, res.Code)
+	as.Equal("/", res.Header().Get("Location"))
+	as.Equal([]string{"B", "A", "C"}, as.listedTitles())
+}
+
+func (as *ActionSuite) Test_TasksMove_Down() {
+	tasks := as.createTasks("A", "B", "C")
+
+	res := as.HTML("/tasks/%s/move", tasks[1].ID).Put(url.Values{"offset": {"1"}})
+	as.Equal(303, res.Code)
+	as.Equal("/", res.Header().Get("Location"))
+	as.Equal([]string{"A", "C", "B"}, as.listedTitles())
+}
+
+func (as *ActionSuite) Test_TasksMove_SeveralPlaces() {
+	tasks := as.createTasks("A", "B", "C")
+
+	res := as.HTML("/tasks/%s/move", tasks[2].ID).Put(url.Values{"offset": {"-2"}})
+	as.Equal(303, res.Code)
+	as.Equal([]string{"C", "A", "B"}, as.listedTitles())
+}
+
+func (as *ActionSuite) Test_TasksMove_FirstCannotMoveUp() {
+	tasks := as.createTasks("A", "B", "C")
+
+	res := as.HTML("/tasks/%s/move", tasks[0].ID).Put(url.Values{"offset": {"-1"}})
+	as.Equal(422, res.Code)
+	as.Equal([]string{"A", "B", "C"}, as.listedTitles())
+}
+
+func (as *ActionSuite) Test_TasksMove_LastCannotMoveDown() {
+	tasks := as.createTasks("A", "B", "C")
+
+	res := as.HTML("/tasks/%s/move", tasks[2].ID).Put(url.Values{"offset": {"1"}})
+	as.Equal(422, res.Code)
+	as.Equal([]string{"A", "B", "C"}, as.listedTitles())
+}
+
+func (as *ActionSuite) Test_TasksMove_InvalidOffset() {
+	tasks := as.createTasks("A", "B", "C")
+
+	res := as.HTML("/tasks/%s/move", tasks[1].ID).Put(url.Values{"offset": {"arriba"}})
+	as.Equal(422, res.Code)
+	as.Equal([]string{"A", "B", "C"}, as.listedTitles())
+
+	res = as.HTML("/tasks/%s/move", tasks[1].ID).Put(url.Values{})
+	as.Equal(422, res.Code)
+	as.Equal([]string{"A", "B", "C"}, as.listedTitles())
+}
+
+func (as *ActionSuite) Test_TasksMove_NotFound() {
+	res := as.HTML("/tasks/%s/move", uuid.Must(uuid.NewV4())).Put(url.Values{"offset": {"1"}})
+	as.Equal(404, res.Code)
+}
+
+func (as *ActionSuite) Test_TasksMove_InvalidID() {
+	res := as.HTML("/tasks/no-es-un-uuid/move").Put(url.Values{"offset": {"1"}})
+	as.Equal(404, res.Code)
+}
+
+func (as *ActionSuite) Test_TasksCreate_AppendsAtEnd() {
+	tasks := as.createTasks("A", "B")
+	as.NoError(tasks[1].Move(as.DB, -1))
+
+	res := as.HTML("/tasks").Post(&models.Task{Title: "C"})
+	as.Equal(303, res.Code)
+	as.Equal([]string{"B", "A", "C"}, as.listedTitles())
+}
+
+func (as *ActionSuite) Test_TasksToggle_KeepsPosition() {
+	tasks := as.createTasks("A", "B", "C")
+	// A pasa al puesto 2: no es el de su creación, ni el primero ni el último.
+	as.NoError(tasks[0].Move(as.DB, 1))
+	as.Equal([]string{"B", "A", "C"}, as.listedTitles())
+
+	for _, step := range []struct {
+		completed bool
+		label     string
+	}{
+		{true, "Reabrir tarea: A"},
+		{false, "Completar tarea: A"},
+	} {
+		res := as.HTML("/tasks/%s/toggle", tasks[0].ID).Put(url.Values{})
+		as.Equal(303, res.Code)
+
+		listed, err := models.AllTasks(as.DB)
+		as.NoError(err)
+		as.Len(listed, 3)
+		for i, title := range []string{"B", "A", "C"} {
+			as.Equal(title, listed[i].Title)
+			as.Equal(i+1, listed[i].Position, title)
+		}
+		as.Equal(step.completed, listed[1].Completed)
+
+		res = as.HTML("/").Get()
+		as.Equal(200, res.Code)
+		as.shownInOrder(res.Body.String(), "B", "A", "C")
+		as.Contains(res.Body.String(), `aria-label="`+step.label+`"`)
+	}
+}
+
+func (as *ActionSuite) Test_TasksDestroy_KeepsListMovable() {
+	tasks := as.createTasks("A", "B", "C")
+
+	res := as.HTML("/tasks/%s", tasks[0].ID).Delete()
+	as.Equal(303, res.Code)
+
+	res = as.HTML("/").Get()
+	as.Equal(200, res.Code)
+	as.True(buttonDisabled(res.Body.String(), "Subir tarea: B"))
+
+	res = as.HTML("/tasks/%s/move", tasks[2].ID).Put(url.Values{"offset": {"-1"}})
+	as.Equal(303, res.Code)
+	as.Equal([]string{"C", "B"}, as.listedTitles())
 }

@@ -1,6 +1,6 @@
 # Visión general
 
-Una aplicación web con una sola lista de tareas, sin usuarios ni cuentas. Se pueden añadir tareas, editar su título, marcarlas como completadas o reabrirlas y eliminarlas. Lo que hace cada pantalla está en [features/tareas.md](features/tareas.md).
+Una aplicación web con una sola lista de tareas, sin usuarios ni cuentas. Se pueden añadir tareas, editar su título, marcarlas como completadas o reabrirlas, ordenarlas y eliminarlas. Lo que hace cada pantalla está en [features/tareas.md](features/tareas.md).
 
 ## Stack
 
@@ -18,7 +18,7 @@ Una aplicación web con una sola lista de tareas, sin usuarios ni cuentas. Se pu
 | --- | --- |
 | `cmd/app/` | El arranque: aplica las migraciones pendientes y sirve la aplicación |
 | `actions/` | Rutas y middleware (`app.go`), acciones de las tareas (`tasks.go`) y comprobación de salud (`health.go`) |
-| `models/` | La conexión a la base de datos, las migraciones (`models.go`) y el modelo `Task` con su validación (`task.go`) |
+| `models/` | La conexión a la base de datos, las migraciones (`models.go`) y el modelo `Task` con su validación y su puesto en la lista (`task.go`) |
 | `templates/` | La plantilla común (`application.plush.html`), los avisos (`_flash.plush.html`) y las pantallas de tareas (`tasks/`) |
 | `public/assets/` | `app.css` y `app.js` |
 | `migrations/` | El esquema y los datos de ejemplo, embebidos en el binario |
@@ -37,9 +37,10 @@ Una tabla, `tasks`:
 | `id` | uuid | Clave primaria |
 | `title` | string(200) | Obligatorio; hasta 200 caracteres (`models.TitleMaxLength`) |
 | `completed` | bool | `false` por defecto |
+| `position` | integer | El puesto en la lista, de 1 en adelante; `0` por defecto. Al crear, el siguiente al mayor; al mover, se renumera la lista. La lista se ordena por `position` y, a igual puesto, por `created_at` |
 | `created_at`, `updated_at` | timestamp | Los pone Pop |
 
-Una migración de datos crea tres tareas de ejemplo, una de ellas completada. Solo las crea si no existen.
+Una migración de datos crea tres tareas de ejemplo, una de ellas completada. Solo las crea si no existen. Otra numera las tareas que haya al aplicarse por su orden de creación.
 
 ## Rutas
 
@@ -50,6 +51,7 @@ Una migración de datos crea tres tareas de ejemplo, una de ellas completada. So
 | `GET` | `/tasks/{task_id}/edit` | `TasksEdit` | El formulario de edición |
 | `PUT` | `/tasks/{task_id}` | `TasksUpdate` | Cambia el título |
 | `PUT` | `/tasks/{task_id}/toggle` | `TasksToggle` | Alterna entre completada y pendiente |
+| `PUT` | `/tasks/{task_id}/move` | `TasksMove` | Mueve la tarea `offset` puestos: negativo sube y positivo baja |
 | `DELETE` | `/tasks/{task_id}` | `TasksDestroy` | Elimina la tarea |
 | `GET` | `/healthz` | `HealthCheck` | `200 {"status":"ok"}` si responde la base de datos; si no, `503` |
 
@@ -61,7 +63,7 @@ Los formularios envían `PUT` y `DELETE` como `POST` con el campo `_method`.
 2. La acción toma la transacción (`c.Value("tx")`), lee la entrada y llama al modelo. `Task.Validate` decide si la entrada es válida.
 3. Si hay errores de validación, la acción vuelve a mostrar el formulario con `422`. Si todo va bien, añade un aviso (flash) y redirige con `303` a `/`.
 4. La pantalla se renderiza dentro de `application.plush.html`, que muestra los avisos pendientes y carga `app.css` y `app.js`.
-5. `app.js` mejora lo que ya funciona sin él: pide confirmación antes de eliminar y cambia el estado de una tarea sin recargar la página.
+5. `app.js` mejora lo que ya funciona sin él: pide confirmación antes de eliminar, cambia el estado de una tarea sin recargar la página y permite ordenar la lista arrastrando cada tarea por su asa.
 
 ## Configuración
 

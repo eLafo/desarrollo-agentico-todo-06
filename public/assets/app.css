@@ -120,6 +120,7 @@ h1 {
 }
 
 .task {
+  position: relative;
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: start;
@@ -127,6 +128,35 @@ h1 {
   min-height: 61px;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--color-border);
+}
+
+.task-handle {
+  display: none;
+}
+
+.task-list-sortable .task-handle {
+  position: absolute;
+  top: 0.5rem;
+  left: -2.25rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 44px;
+  color: var(--color-muted);
+  cursor: grab;
+}
+
+.task-list-sortable .task-handle:active {
+  cursor: grabbing;
+}
+
+.task-handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.task-dragging {
+  opacity: 0.5;
 }
 
 .task-title {
@@ -221,6 +251,16 @@ h1 {
 .icon-danger:hover {
   color: var(--color-danger);
   background: #fcf0ec;
+}
+
+.icon-action:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.icon-action:disabled:hover {
+  color: var(--color-muted);
+  background: transparent;
 }
 
 .new-task {
@@ -393,13 +433,17 @@ input:focus-visible {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .task-actions {
+  .task-actions,
+  .task-handle {
     opacity: 0;
     transition: opacity 120ms ease;
   }
 
   .task:hover .task-actions,
-  .task:focus-within .task-actions {
+  .task:focus-within .task-actions,
+  .task:hover .task-handle,
+  .task:focus-within .task-handle,
+  .task-dragging .task-handle {
     opacity: 1;
   }
 }
@@ -431,6 +475,10 @@ input:focus-visible {
 
   .task-actions {
     opacity: 1;
+  }
+
+  .task-list-sortable .task-handle {
+    display: none;
   }
 
   .task {

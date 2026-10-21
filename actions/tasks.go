@@ -1,7 +1,9 @@
 package actions
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"todo/models"
@@ -15,8 +17,8 @@ import (
 func TasksIndex(c buffalo.Context) error {
 	tx := c.Value("tx").(*pop.Connection)
 
-	tasks := models.Tasks{}
-	if err := tx.Order("created_at asc, id asc").All(&tasks); err != nil {
+	tasks, err := models.AllTasks(tx)
+	if err != nil {
 		return err
 	}
 
@@ -42,8 +44,8 @@ func TasksCreate(c buffalo.Context) error {
 	}
 
 	if verrs.HasAny() {
-		tasks := models.Tasks{}
-		if err := tx.Order("created_at asc, id asc").All(&tasks); err != nil {
+		tasks, err := models.AllTasks(tx)
+		if err != nil {
 			return err
 		}
 
@@ -113,6 +115,30 @@ func TasksToggle(c buffalo.Context) error {
 
 	task.Completed = !task.Completed
 	if err := tx.Update(task); err != nil {
+		return err
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/")
+}
+
+// TasksMove mueve una tarea en la lista tantos puestos como diga offset: negativo sube y positivo baja.
+func TasksMove(c buffalo.Context) error {
+	tx := c.Value("tx").(*pop.Connection)
+
+	task := &models.Task{}
+	if err := tx.Find(task, c.Param("task_id")); err != nil {
+		return c.Error(http.StatusNotFound, err)
+	}
+
+	offset, err := strconv.Atoi(c.Param("offset"))
+	if err != nil {
+		return c.Error(http.StatusUnprocessableEntity, err)
+	}
+
+	if err := task.Move(tx, offset); err != nil {
+		if errors.Is(err, models.ErrMoveOutOfRange) {
+			return c.Error(http.StatusUnprocessableEntity, err)
+		}
 		return err
 	}
 
