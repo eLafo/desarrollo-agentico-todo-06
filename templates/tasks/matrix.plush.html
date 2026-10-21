@@ -1,0 +1,14 @@
+<header class="page-header">
+  <a href="/" class="back-link"><span aria-hidden="true">←</span> Volver a la lista</a>
+  <h1>Matriz de Eisenhower</h1>
+  <p class="page-intro">Cada tarea está en el cuadrante que le corresponde por su importancia y su urgencia. Es urgente si su fecha límite es hoy, mañana o pasado mañana, o si ya ha pasado.</p>
+</header>
+
+<div class="matrix">
+  <%= partial("tasks/quadrant.plush.html", {id: "quadrant-do", heading: "Hacer ya", hint: "Urgentes e importantes", items: matrix.Do, emptyText: "No hay tareas en este cuadrante."}) %>
+  <%= partial("tasks/quadrant.plush.html", {id: "quadrant-schedule", heading: "Planificar", hint: "Importantes, no urgentes", items: matrix.Schedule, emptyText: "No hay tareas en este cuadrante."}) %>
+  <%= partial("tasks/quadrant.plush.html", {id: "quadrant-delegate", heading: "Delegar", hint: "Urgentes, no importantes", items: matrix.Delegate, emptyText: "No hay tareas en este cuadrante."}) %>
+  <%= partial("tasks/quadrant.plush.html", {id: "quadrant-eliminate", heading: "Descartar", hint: "Ni urgentes ni importantes", items: matrix.Eliminate, emptyText: "No hay tareas en este cuadrante."}) %>
+</div>
+
+<%= partial("tasks/quadrant.plush.html", {id: "unclassified", heading: "Sin clasificar", hint: "Les falta la fecha límite o decidir su importancia. Edítalas para colocarlas en la matriz.", items: matrix.Unclassified, emptyText: "No hay tareas sin clasificar."}) %>

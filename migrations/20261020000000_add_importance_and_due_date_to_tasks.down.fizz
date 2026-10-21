@@ -1,0 +1,2 @@
+drop_column("tasks", "due_date")
+drop_column("tasks", "importance")

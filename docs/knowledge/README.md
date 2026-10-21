@@ -8,9 +8,13 @@ Qué es el sistema y qué hace hoy. Describe el comportamiento vigente, no su hi
 
 ## Según la tarea
 
-- [features/tareas.md](features/tareas.md): la lista de tareas: ver, añadir, editar, completar o reabrir y eliminar, con sus reglas y sus mensajes.
+- [features/tareas.md](features/tareas.md): la lista de tareas: ver, añadir, editar, completar o reabrir y eliminar, con sus reglas (también las de la importancia y la fecha límite) y sus mensajes.
   - Cuando se cambie una pantalla, una regla o un mensaje de la lista de tareas
   - Cuando se toque `actions/tasks.go`, `models/task.go`, `templates/` o `public/assets/`
   - Cuando se investigue un comportamiento de la lista
+- [features/matriz.md](features/matriz.md): la matriz de Eisenhower: sus cuadrantes, la zona «Sin clasificar», la regla de urgencia y las acciones desde la matriz.
+  - Cuando se cambie la matriz, sus cuadrantes o la regla de urgencia
+  - Cuando se toque `models/matrix.go`, `TasksMatrix` o `templates/tasks/matrix.plush.html`
+  - Cuando se cambie la importancia o la fecha límite
 
 Una funcionalidad nueva que no encaja en un documento existente tiene el suyo en `features/`, con su entrada en este índice.

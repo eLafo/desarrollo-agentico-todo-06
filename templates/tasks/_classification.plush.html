@@ -1,0 +1,34 @@
+<div class="task-classification">
+  <div class="classification-field">
+    <label for="task-importance">Importancia</label>
+    <select
+      id="task-importance"
+      name="importance"
+      <%= if (len(errors.Get("importance")) > 0) { %>aria-invalid="true" aria-describedby="importance-error"<% } %>
+    >
+      <option value="undecided"<%= if (task.Importance == "undecided") { %> selected<% } %>>Sin decidir</option>
+      <option value="important"<%= if (task.Importance == "important") { %> selected<% } %>>Importante</option>
+      <option value="not_important"<%= if (task.Importance == "not_important") { %> selected<% } %>>No importante</option>
+    </select>
+    <%= if (len(errors.Get("importance")) > 0) { %>
+      <p id="importance-error" class="field-error" role="alert">
+        <%= for (msg) in errors.Get("importance") { %><%= msg %><% } %>
+      </p>
+    <% } %>
+  </div>
+  <div class="classification-field">
+    <label for="task-due-date">Fecha límite</label>
+    <input
+      id="task-due-date"
+      type="date"
+      name="due_date"
+      value="<%= task.DueDateValue() %>"
+      <%= if (len(errors.Get("due_date")) > 0) { %>aria-invalid="true" aria-describedby="due-date-error"<% } %>
+    >
+    <%= if (len(errors.Get("due_date")) > 0) { %>
+      <p id="due-date-error" class="field-error" role="alert">
+        <%= for (msg) in errors.Get("due_date") { %><%= msg %><% } %>
+      </p>
+    <% } %>
+  </div>
+</div>
