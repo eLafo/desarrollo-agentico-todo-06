@@ -82,6 +82,13 @@ npx playwright test e2e/tareas/anadir-una-tarea.spec.ts
 
 Playwright arranca la aplicación con `GO_ENV=test` en `127.0.0.1:3001` (otro puerto con `E2E_PORT`), contra `todo_test` (en `DB_PORT`), y la para al terminar. Cada test empieza con la lista vacía y crea las tareas que necesita con la fixture `tasks` de `e2e/fixtures.ts`. Si un test falla, el informe queda en `playwright-report/` y la traza en `test-results/`.
 
+La fixture `tasks` acepta en cada tarea, además del título y si está completada (`completed`), su importancia (`importance`: `undecided`, el valor por defecto, `important` o `not_important`) y su fecha límite (`dueInDays`: días desde hoy, negativos si ya ha vencido; sin él, la tarea no tiene fecha). `dateInDays(días)`, también de `e2e/fixtures.ts`, da esa fecha en el formato del campo «Fecha límite» (AAAA-MM-DD). Las dos cuentan «hoy» en Europe/Madrid, como la aplicación, sea cual sea la zona del equipo:
+
+```ts
+await tasks([{ title: 'Preparar la demo', importance: 'important', dueInDays: 1 }]);
+await page.getByRole('textbox', { name: 'Fecha límite' }).fill(dateInDays(10));
+```
+
 ## Gates
 
 ```bash

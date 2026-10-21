@@ -31,3 +31,7 @@ Una sección por pregunta.
 Entre una y tres condiciones por fichero, y las entradas en orden por número de issue.
 
 ## Índice
+
+- [feature-3-quiero-una-vista-nueva-matriz-de-eissenhower.md](feature-3-quiero-una-vista-nueva-matriz-de-eissenhower.md): la importancia y la fecha límite salen de la tarea; urgente a 2 días; sin clasificar si falta cualquiera de las dos
+  - Cuando se cambie cómo se decide la urgencia o el margen de `models.UrgentDays`
+  - Cuando se decida qué tareas van a «Sin clasificar» o qué se puede hacer desde la matriz

@@ -1,6 +1,6 @@
 # Visión general
 
-Una aplicación web con una sola lista de tareas, sin usuarios ni cuentas. Se pueden añadir tareas, editar su título, marcarlas como completadas o reabrirlas y eliminarlas. Lo que hace cada pantalla está en [features/tareas.md](features/tareas.md).
+Una aplicación web con una sola lista de tareas, sin usuarios ni cuentas. Se pueden añadir tareas con su importancia y su fecha límite, editar su título, su importancia y su fecha, marcarlas como completadas o reabrirlas, eliminarlas y verlas en una matriz de Eisenhower. Lo que hace cada pantalla está en [features/tareas.md](features/tareas.md) y [features/matriz.md](features/matriz.md).
 
 ## Stack
 
@@ -18,7 +18,7 @@ Una aplicación web con una sola lista de tareas, sin usuarios ni cuentas. Se pu
 | --- | --- |
 | `cmd/app/` | El arranque: aplica las migraciones pendientes y sirve la aplicación |
 | `actions/` | Rutas y middleware (`app.go`), acciones de las tareas (`tasks.go`) y comprobación de salud (`health.go`) |
-| `models/` | La conexión a la base de datos, las migraciones (`models.go`) y el modelo `Task` con su validación (`task.go`) |
+| `models/` | La conexión a la base de datos, las migraciones (`models.go`), el modelo `Task` con su validación (`task.go`) y el reparto de las tareas en la matriz de Eisenhower (`matrix.go`) |
 | `templates/` | La plantilla común (`application.plush.html`), los avisos (`_flash.plush.html`) y las pantallas de tareas (`tasks/`) |
 | `public/assets/` | `app.css` y `app.js` |
 | `migrations/` | El esquema y los datos de ejemplo, embebidos en el binario |
@@ -37,6 +37,8 @@ Una tabla, `tasks`:
 | `id` | uuid | Clave primaria |
 | `title` | string(200) | Obligatorio; hasta 200 caracteres (`models.TitleMaxLength`) |
 | `completed` | bool | `false` por defecto |
+| `importance` | string(20) | `undecided` (sin decidir, por defecto), `important` o `not_important` |
+| `due_date` | date, nulo | La fecha límite: un día, sin hora. Opcional |
 | `created_at`, `updated_at` | timestamp | Los pone Pop |
 
 Una migración de datos crea tres tareas de ejemplo, una de ellas completada. Solo las crea si no existen.
@@ -46,20 +48,21 @@ Una migración de datos crea tres tareas de ejemplo, una de ellas completada. So
 | Método | Ruta | Acción | Qué hace |
 | --- | --- | --- | --- |
 | `GET` | `/` | `TasksIndex` | La lista y el formulario para añadir |
+| `GET` | `/matrix` | `TasksMatrix` | La matriz de Eisenhower |
 | `POST` | `/tasks` | `TasksCreate` | Crea una tarea |
 | `GET` | `/tasks/{task_id}/edit` | `TasksEdit` | El formulario de edición |
-| `PUT` | `/tasks/{task_id}` | `TasksUpdate` | Cambia el título |
+| `PUT` | `/tasks/{task_id}` | `TasksUpdate` | Cambia el título, la importancia y la fecha límite |
 | `PUT` | `/tasks/{task_id}/toggle` | `TasksToggle` | Alterna entre completada y pendiente |
 | `DELETE` | `/tasks/{task_id}` | `TasksDestroy` | Elimina la tarea |
 | `GET` | `/healthz` | `HealthCheck` | `200 {"status":"ok"}` si responde la base de datos; si no, `503` |
 
-Los formularios envían `PUT` y `DELETE` como `POST` con el campo `_method`.
+Los formularios envían `PUT` y `DELETE` como `POST` con el campo `_method`. Editar, guardar, completar y eliminar aceptan `return_to=/matrix` para volver a la matriz; cualquier otro valor vuelve a `/`.
 
 ## Recorrido de una petición
 
 1. La ruta de `actions/app.go` elige la acción. Antes pasan los middleware: redirección a HTTPS (solo en producción), registro de parámetros, protección CSRF (Buffalo la desactiva con `GO_ENV=test`) y una transacción de base de datos por petición.
 2. La acción toma la transacción (`c.Value("tx")`), lee la entrada y llama al modelo. `Task.Validate` decide si la entrada es válida.
-3. Si hay errores de validación, la acción vuelve a mostrar el formulario con `422`. Si todo va bien, añade un aviso (flash) y redirige con `303` a `/`.
+3. Si hay errores de validación, la acción vuelve a mostrar el formulario con `422`. Si todo va bien, añade un aviso (flash) y redirige con `303` a `/`, o a `/matrix` si la acción llegó con `return_to=/matrix`.
 4. La pantalla se renderiza dentro de `application.plush.html`, que muestra los avisos pendientes y carga `app.css` y `app.js`.
 5. `app.js` mejora lo que ya funciona sin él: pide confirmación antes de eliminar y cambia el estado de una tarea sin recargar la página.
 

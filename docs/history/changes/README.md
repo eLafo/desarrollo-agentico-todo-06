@@ -18,3 +18,9 @@ Un documento de cierre cuenta qué pasó en su caso, y no se reescribe cuando ot
 Entre tres y cinco condiciones por documento, y las entradas en orden por número de issue. Si un documento ya tiene entrada, se actualizan sus condiciones en lugar de añadir otra.
 
 ## Índice
+
+- [feature-3-quiero-una-vista-nueva-matriz-de-eissenhower.md](feature-3-quiero-una-vista-nueva-matriz-de-eissenhower.md): matriz de Eisenhower en `/matrix`, con importancia y fecha límite en las tareas
+  - Cuando se trabaje con `GET /matrix`, `TasksMatrix` o las plantillas `templates/tasks/matrix.plush.html`, `_quadrant`, `_task` o `_classification`
+  - Cuando se modifique la importancia o la fecha límite de `models.Task`, o la regla de urgencia de `models/matrix.go`
+  - Cuando se cambien las acciones de completar, editar o eliminar y adónde vuelven (`return_to`, `returnPath`)
+  - Cuando se investigue una tarea en el cuadrante o en «Sin clasificar» equivocado, o un desfase de un día por la zona horaria

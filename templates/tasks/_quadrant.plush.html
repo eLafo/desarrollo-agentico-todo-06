@@ -1,0 +1,13 @@
+<section id="<%= id %>" class="quadrant" aria-labelledby="<%= id %>-heading">
+  <h2 id="<%= id %>-heading"><%= heading %></h2>
+  <p class="quadrant-hint"><%= hint %></p>
+  <%= if (len(items) == 0) { %>
+    <p class="empty-state"><%= emptyText %></p>
+  <% } else { %>
+    <ul class="task-list">
+      <%= for (t) in items { %>
+        <%= partial("tasks/task.plush.html", {task: t, fromMatrix: true}) %>
+      <% } %>
+    </ul>
+  <% } %>
+</section>

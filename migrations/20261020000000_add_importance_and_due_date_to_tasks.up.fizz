@@ -1,0 +1,2 @@
+add_column("tasks", "importance", "string", {"size": 20, "default": "undecided"})
+add_column("tasks", "due_date", "date", {"null": true})

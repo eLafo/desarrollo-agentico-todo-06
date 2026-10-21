@@ -1,11 +1,14 @@
 <header class="page-header">
-  <a href="/" class="back-link"><span aria-hidden="true">←</span> Volver a la lista</a>
+  <a href="<%= returnTo %>" class="back-link"><span aria-hidden="true">←</span> <%= if (returnTo == "/matrix") { %>Volver a la matriz<% } else { %>Volver a la lista<% } %></a>
   <h1>Editar tarea</h1>
 </header>
 
 <form action="/tasks/<%= task.ID %>" method="POST" class="edit-task">
   <input type="hidden" name="authenticity_token" value="<%= authenticity_token %>">
   <input type="hidden" name="_method" value="PUT">
+  <%= if (returnTo == "/matrix") { %>
+    <input type="hidden" name="return_to" value="/matrix">
+  <% } %>
   <label for="task-title">Título</label>
   <input
     id="task-title"
@@ -15,16 +18,17 @@
     maxlength="200"
     autocomplete="off"
     autofocus
-    <%= if (errors.HasAny()) { %>aria-invalid="true" aria-describedby="title-error"<% } else { %>aria-describedby="title-help"<% } %>
+    <%= if (len(errors.Get("title")) > 0) { %>aria-invalid="true" aria-describedby="title-error"<% } else { %>aria-describedby="title-help"<% } %>
   >
   <p id="title-help" class="field-hint">Hasta 200 caracteres. Los demás datos de la tarea no cambian.</p>
-  <%= if (errors.HasAny()) { %>
+  <%= if (len(errors.Get("title")) > 0) { %>
     <p id="title-error" class="field-error" role="alert">
       <%= for (msg) in errors.Get("title") { %><%= msg %><% } %>
     </p>
   <% } %>
+  <%= partial("tasks/classification.plush.html") %>
   <div class="edit-task-actions">
-    <a href="/" class="button">Cancelar</a>
+    <a href="<%= returnTo %>" class="button">Cancelar</a>
     <button type="submit" class="button button-primary">Guardar cambios</button>
   </div>
 </form>
